@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ContentForge — Multi-Channel Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0a0a0f;
+    --paper: #f5f3ee;
+    --cream: #ede9e0;
+    --accent: #ff4d1c;
+    --accent2: #1c3fff;
+    --accent3: #00c97a;
+    --muted: #888078;
+    --border: #d4cfc5;
+    --card: #ffffff;
+    --tag-bg: #eee9df;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 2px solid var(--accent);
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    letter-spacing: -0.5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-dot {
+    width: 10px; height: 10px;
+    background: var(--accent);
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .header-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* LAYOUT */
+  .app {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    min-height: calc(100vh - 64px);
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    background: var(--cream);
+    border-right: 1px solid var(--border);
+    padding: 32px 28px;
+    overflow-y: auto;
+    max-height: calc(100vh - 64px);
+    position: sticky;
+    top: 64px;
+  }
+
+  .sidebar-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  .form-group {
+    margin-bottom: 22px;
+  }
+
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 7px;
+    letter-spacing: 0.2px;
+  }
+
+  .label-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    margin-left: 6px;
+    font-weight: 400;
+  }
+
+  textarea, input[type="text"], select {
+    width: 100%;
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 11px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.2s;
+    resize: vertical;
+  }
+
+  textarea:focus, input[type="text"]:focus, select:focus {
+    border-color: var(--accent2);
+    box-shadow: 0 0 0 3px rgba(28,63,255,0.08);
+  }
+
+  textarea { min-height: 110px; }
+
+  /* IMAGE UPLOAD */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--card);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .upload-zone:hover { border-color: var(--accent2); background: #f0f3ff; }
+  .upload-zone.has-image { border-style: solid; border-color: var(--accent3); }
+
+  .upload-zone input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+
+  .upload-icon { font-size: 28px; margin-bottom: 8px; }
+
+  .upload-text {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .upload-preview {
+    width: 100%; max-height: 160px;
+    object-fit: cover;
+    border-radius: 6px;
+    display: none;
+  }
+
+  /* CHANNEL CHECKBOXES */
+  .channel-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .channel-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s;
+    user-select: none;
+  }
+
+  .channel-check:hover { border-color: var(--accent2); }
+  .channel-check.selected { border-color: var(--accent2); background: #eef0ff; color: var(--accent2); }
+  .channel-check input { display: none; }
+  .channel-icon { font-size: 16px; }
+
+  /* TONE PILLS */
+  .tone-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .tone-pill {
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: var(--card);
+    user-select: none;
+  }
+
+  .tone-pill:hover { border-color: var(--accent); }
+  .tone-pill.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+  /* GENERATE BUTTON */
+  .generate-btn {
+    width: 100%;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 15px;
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .generate-btn:hover { background: #e03000; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(255,77,28,0.35); }
+  .generate-btn:active { transform: translateY(0); }
+  .generate-btn:disabled { background: var(--muted); cursor: not-allowed; transform: none; box-shadow: none; }
+
+  .btn-spinner {
+    width: 18px; height: 18px;
+    border: 2.5px solid rgba(255,255,255,0.4);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* MAIN CONTENT */
+  .main {
+    padding: 36px 40px;
+    overflow-y: auto;
+  }
+
+  /* EMPTY STATE */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    text-align: center;
+    opacity: 0.5;
+  }
+
+  .empty-icon { font-size: 56px; margin-bottom: 16px; }
+
+  .empty-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .empty-sub { font-size: 14px; color: var(--muted); max-width: 320px; }
+
+  /* OUTPUT TABS */
+  .output-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .output-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+
+  .copy-all-btn {
+    padding: 8px 18px;
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    border-radius: 7px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .copy-all-btn:hover { background: #333; }
+
+  /* CHANNEL OUTPUT CARDS */
+  .channels-output { display: flex; flex-direction: column; gap: 24px; }
+
+  .channel-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+    animation: fadeInUp 0.4s ease both;
+  }
+
+  .channel-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card-header {
+    padding: 16px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    background: var(--cream);
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .card-title-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .card-icon {
+    width: 36px; height: 36px;
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+  }
+
+  .card-subtitle {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .card-specs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .spec-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    background: var(--tag-bg);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .spec-tag.highlight { background: #fff3eb; color: var(--accent); border-color: #ffd0bc; }
+
+  /* PLATFORM TABS within a channel card */
+  .platform-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .platform-tabs::-webkit-scrollbar { display: none; }
+
+  .ptab {
+    padding: 10px 18px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2.5px solid transparent;
+    white-space: nowrap;
+    transition: all 0.15s;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+  }
+
+  .ptab:hover { color: var(--ink); }
+  .ptab.active { color: var(--ink); border-bottom-color: var(--accent2); font-weight: 600; }
+
+  /* CONTENT AREA */
+  .card-body { padding: 22px; }
+
+  .platform-content { display: none; }
+  .platform-content.active { display: block; }
+
+  .content-section { margin-bottom: 18px; }
+
+  .content-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 7px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .content-text {
+    background: var(--paper);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--ink);
+    white-space: pre-wrap;
+    position: relative;
+  }
+
+  .content-text.headline {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    background: #fff8f5;
+    border-color: #ffd0bc;
+  }
+
+  /* CHAR COUNT */
+  .char-meter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
+  }
+
+  .char-bar-wrap {
+    flex: 1;
+    height: 4px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .char-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.4s ease, background 0.3s;
+  }
+
+  .char-count {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  /* DIMENSIONS BADGE */
+  .dims-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+  }
+
+  .dim-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    background: var(--paper);
+  }
+
+  .dim-icon { font-size: 13px; }
+
+  /* COPY BUTTON */
+  .copy-section-btn {
+    margin-top: 10px;
+    padding: 7px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 7px;
+    background: white;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--ink);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .copy-section-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+  .copy-section-btn.copied { border-color: var(--accent3); color: var(--accent3); }
+
+  /* LOADING SKELETON */
+  .skeleton {
+    background: linear-gradient(90deg, var(--cream) 25%, var(--border) 50%, var(--cream) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.2s infinite;
+    border-radius: 6px;
+    height: 16px;
+    margin-bottom: 8px;
+  }
+
+  @keyframes shimmer { to { background-position: -200% 0; } }
+
+  .skeleton-block {
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--paper);
+  }
+
+  /* DIVIDER */
+  .section-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 20px 0;
+  }
+
+  /* COLOR INDICATORS per channel type */
+  .ic-webpage { background: #eef0ff; }
+  .ic-paid { background: #fff3eb; }
+  .ic-social { background: #e8fff4; }
+  .ic-email { background: #fff0f9; }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar { position: static; max-height: none; }
+    .main { padding: 24px 20px; }
+    header { padding: 0 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="logo-dot"></span>
+    ContentForge
+  </div>
+  <span class="header-tag">Multi-Channel Content Generator</span>
+</header>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <p class="sidebar-title">Brief</p>
+
+    <div class="form-group">
+      <label>Brand / Product Name <span class="label-tag">required</span></label>
+      <input type="text" id="brand" placeholder="e.g. Nike Air Max 2025" />
+    </div>
+
+    <div class="form-group">
+      <label>Core Message / Offer <span class="label-tag">required</span></label>
+      <textarea id="message" placeholder="Describe what you're promoting — key benefits, offer details, what makes it special..."></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Target Audience</label>
+      <input type="text" id="audience" placeholder="e.g. Fitness enthusiasts 25–40, urban professionals" />
+    </div>
+
+    <div class="form-group">
+      <label>Upload Image <span class="label-tag">optional</span></label>
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="imageUpload" accept="image/*" />
+        <img class="upload-preview" id="uploadPreview" />
+        <div id="uploadPlaceholder">
+          <div class="upload-icon">🖼️</div>
+          <div class="upload-text">Drop an image or click to browse<br><small>JPG, PNG, WebP — used for context</small></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Tone of Voice</label>
+      <div class="tone-pills">
+        <span class="tone-pill active" data-tone="professional">Professional</span>
+        <span class="tone-pill" data-tone="playful">Playful</span>
+        <span class="tone-pill" data-tone="bold">Bold</span>
+        <span class="tone-pill" data-tone="inspirational">Inspirational</span>
+        <span class="tone-pill" data-tone="urgent">Urgent</span>
+        <span class="tone-pill" data-tone="conversational">Conversational</span>
+        <span class="tone-pill" data-tone="luxurious">Luxurious</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Generate Content For</label>
+      <div class="channel-grid">
+        <label class="channel-check selected" data-channel="webpage">
+          <input type="checkbox" checked> <span class="channel-icon">🌐</span> Webpage
+        </label>
+        <label class="channel-check selected" data-channel="paid">
+          <input type="checkbox" checked> <span class="channel-icon">💰</span> Paid Ad
+        </label>
+        <label class="channel-check selected" data-channel="social">
+          <input type="checkbox" checked> <span class="channel-icon">📱</span> Social
+        </label>
+        <label class="channel-check selected" data-channel="email">
+          <input type="checkbox" checked> <span class="channel-icon">✉️</span> Email
+        </label>
+      </div>
+    </div>
+
+    <button class="generate-btn" id="generateBtn" onclick="generateContent()">
+      <div class="btn-spinner" id="btnSpinner"></div>
+      <span id="btnText">✦ Generate Content</span>
+    </button>
+  </aside>
+
+  <!-- MAIN OUTPUT -->
+  <main class="main" id="mainOutput">
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">✦</div>
+      <div class="empty-title">Ready to create</div>
+      <div class="empty-sub">Fill in your brief and hit Generate to create content for every channel.</div>
+    </div>
+    <div id="outputArea" style="display:none"></div>
+  </main>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+let selectedTone = 'professional';
+let selectedChannels = new Set(['webpage','paid','social','email']);
+let uploadedImageBase64 = null;
+let uploadedImageType = null;
+
+// ── Tone pills ─────────────────────────────────────────────────────────────
+document.querySelectorAll('.tone-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('.tone-pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+    selectedTone = pill.dataset.tone;
+  });
+});
+
+// ── Channel toggles ────────────────────────────────────────────────────────
+document.querySelectorAll('.channel-check').forEach(check => {
+  check.addEventListener('click', () => {
+    const ch = check.dataset.channel;
+    const inp = check.querySelector('input');
+    if (selectedChannels.has(ch)) {
+      selectedChannels.delete(ch);
+      check.classList.remove('selected');
+      inp.checked = false;
+    } else {
+      selectedChannels.add(ch);
+      check.classList.add('selected');
+      inp.checked = true;
+    }
+  });
+});
+
+// ── Image upload ───────────────────────────────────────────────────────────
+document.getElementById('imageUpload').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    uploadedImageBase64 = ev.target.result.split(',')[1];
+    uploadedImageType = file.type;
+    const preview = document.getElementById('uploadPreview');
+    preview.src = ev.target.result;
+    preview.style.display = 'block';
+    document.getElementById('uploadPlaceholder').style.display = 'none';
+    document.getElementById('uploadZone').classList.add('has-image');
+  };
+  reader.readAsDataURL(file);
+});
+
+// ── Platform specs ─────────────────────────────────────────────────────────
+const PLATFORM_SPECS = {
+  instagram: {
+    label: 'Instagram',
+    icon: '📸',
+    dims: ['Feed: 1080×1080px (1:1)', 'Story: 1080×1920px (9:16)', 'Reel cover: 1080×1920px'],
+    charLimits: { caption: 2200, hashtags: 30, bio: 150 },
+    fields: ['headline','caption','hashtags','cta']
+  },
+  facebook: {
+    label: 'Facebook',
+    icon: '👍',
+    dims: ['Feed: 1200×630px (1.91:1)', 'Story: 1080×1920px (9:16)', 'Cover: 820×312px'],
+    charLimits: { headline: 40, primary: 125, description: 30 },
+    fields: ['headline','primary_text','description','cta']
+  },
+  twitter: {
+    label: 'X / Twitter',
+    icon: '✖️',
+    dims: ['Image: 1600×900px (16:9)', 'Card: 800×418px', 'Profile: 400×400px'],
+    charLimits: { tweet: 280 },
+    fields: ['tweet','cta']
+  },
+  youtube: {
+    label: 'YouTube',
+    icon: '▶️',
+    dims: ['Thumbnail: 1280×720px (16:9)', 'Banner: 2560×1440px', 'Shorts: 1080×1920px (9:16)'],
+    charLimits: { title: 100, description: 5000, tags: 500 },
+    fields: ['title','description','cta']
+  }
+};
+
+// ── Build prompt ───────────────────────────────────────────────────────────
+function buildPrompt(brand, message, audience, channels) {
+  const channelList = [...channels].join(', ');
+  return `You are an expert multi-channel copywriter and content strategist. Generate content for the following brief:
+
+BRAND/PRODUCT: ${brand}
+CORE MESSAGE: ${message}
+TARGET AUDIENCE: ${audience || 'General audience'}
+TONE: ${selectedTone}
+CHANNELS: ${channelList}
+
+Return ONLY valid JSON (no markdown, no backticks) with this exact structure. Include only the channels requested from: webpage, paid, social, email.
+
+{
+  "webpage": {
+    "hero_headline": "Punchy H1 (max 8 words)",
+    "hero_subheadline": "Supporting statement (max 20 words)",
+    "body_copy": "2–3 sentences of compelling body copy",
+    "cta_primary": "Primary CTA button text (max 5 words)",
+    "cta_secondary": "Secondary CTA (max 5 words)",
+    "meta_title": "SEO page title (50–60 chars)",
+    "meta_description": "SEO meta description (150–160 chars)",
+    "key_benefits": ["Benefit 1 (10 words max)", "Benefit 2", "Benefit 3"]
+  },
+  "paid": {
+    "instagram": {
+      "headline": "Ad headline (40 chars max)",
+      "caption": "Caption text (125 chars ideal, 2200 max)",
+      "hashtags": "#tag1 #tag2 #tag3 (5–10 relevant hashtags)",
+      "cta": "CTA button text"
+    },
+    "facebook": {
+      "headline": "Ad headline (40 chars max)",
+      "primary_text": "Primary text (125 chars ideal)",
+      "description": "Link description (30 chars max)",
+      "cta": "CTA button text"
+    },
+    "twitter": {
+      "tweet": "Full tweet copy with hashtags (280 chars max)",
+      "cta": "CTA text"
+    },
+    "youtube": {
+      "title": "Video title (70 chars ideal, 100 max)",
+      "description": "Video description first 125 chars (most visible) + expanded description",
+      "cta": "CTA overlay text"
+    }
+  },
+  "social": {
+    "instagram": {
+      "caption": "Organic Instagram caption with personality (max 2200 chars). Include line breaks for readability.",
+      "hashtags": "#tag1 #tag2 (10–15 hashtags for organic reach)",
+      "cta": "Engagement CTA"
+    },
+    "facebook": {
+      "post": "Organic Facebook post (optimal 40–80 words). Conversational, shareable.",
+      "cta": "Engagement prompt"
+    },
+    "twitter": {
+      "tweet": "Tweet (280 chars max) — punchy, engaging, shareable",
+      "thread_hook": "If thread needed: hook tweet (280 chars)"
+    },
+    "youtube": {
+      "title": "Organic video title optimized for search (70 chars ideal)",
+      "description": "Full YouTube description with timestamps placeholder, links, hashtags (500+ chars)",
+      "tags": "tag1, tag2, tag3, tag4, tag5 (relevant search tags)"
+    }
+  },
+  "email": {
+    "subject_line": "Email subject line (40–50 chars, curiosity-driven)",
+    "preheader": "Preview text (85–100 chars)",
+    "headline": "Email hero headline",
+    "body": "3–4 sentences of email body copy",
+    "cta": "CTA button text (max 5 words)",
+    "ps_line": "P.S. line for extra urgency or value"
+  }
+}`;
+}
+
+// ── Generate ───────────────────────────────────────────────────────────────
+async function generateContent() {
+  const brand = document.getElementById('brand').value.trim();
+  const message = document.getElementById('message').value.trim();
+  const audience = document.getElementById('audience').value.trim();
+
+  if (!brand || !message) {
+    alert('Please enter a brand/product name and core message.');
+    return;
+  }
+
+  if (selectedChannels.size === 0) {
+    alert('Please select at least one channel.');
+    return;
+  }
+
+  // UI loading state
+  const btn = document.getElementById('generateBtn');
+  btn.disabled = true;
+  document.getElementById('btnSpinner').style.display = 'block';
+  document.getElementById('btnText').textContent = 'Generating…';
+
+  document.getElementById('emptyState').style.display = 'none';
+  const outputArea = document.getElementById('outputArea');
+  outputArea.style.display = 'block';
+  outputArea.innerHTML = renderSkeleton();
+
+  // Build messages
+  const userContent = [];
+  if (uploadedImageBase64) {
+    userContent.push({ type: 'image', source: { type: 'base64', media_type: uploadedImageType, data: uploadedImageBase64 } });
+  }
+  userContent.push({ type: 'text', text: buildPrompt(brand, message, audience, selectedChannels) });
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        messages: [{ role: 'user', content: userContent }]
+      })
+    });
+
+    const data = await resp.json();
+    const raw = data.content.map(b => b.text || '').join('');
+
+    // Parse JSON
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const result = JSON.parse(clean);
+
+    renderOutput(result, brand);
+  } catch (err) {
+    outputArea.innerHTML = `<div style="padding:40px;text-align:center;color:var(--accent);">
+      <div style="font-size:36px;margin-bottom:12px">⚠️</div>
+      <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:8px">Generation failed</div>
+      <div style="color:var(--muted);font-size:13px">${err.message}</div>
+    </div>`;
+  } finally {
+    btn.disabled = false;
+    document.getElementById('btnSpinner').style.display = 'none';
+    document.getElementById('btnText').textContent = '✦ Generate Content';
+  }
+}
+
+// ── Skeleton ───────────────────────────────────────────────────────────────
+function renderSkeleton() {
+  return `<div class="channels-output">${[1,2,3].map(() => `
+    <div class="channel-card">
+      <div class="card-header"><div class="skeleton" style="width:200px;height:20px"></div></div>
+      <div class="card-body">
+        <div class="skeleton-block">
+          <div class="skeleton" style="width:60%"></div>
+          <div class="skeleton" style="width:90%"></div>
+          <div class="skeleton" style="width:75%"></div>
+        </div>
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+// ── Char bar color ─────────────────────────────────────────────────────────
+function charColor(pct) {
+  if (pct < 70) return '#00c97a';
+  if (pct < 90) return '#f5a623';
+  return '#ff4d1c';
+}
+
+// ── Char meter HTML ────────────────────────────────────────────────────────
+function charMeter(text, limit) {
+  if (!limit || !text) return '';
+  const len = text.length;
+  const pct = Math.min(100, (len / limit) * 100);
+  return `<div class="char-meter">
+    <div class="char-bar-wrap"><div class="char-bar" style="width:${pct}%;background:${charColor(pct)}"></div></div>
+    <span class="char-count">${len}/${limit}</span>
+  </div>`;
+}
+
+// ── Copy helper ────────────────────────────────────────────────────────────
+function copyText(el, btnEl) {
+  const text = el.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btnEl.textContent = '✓ Copied!';
+    btnEl.classList.add('copied');
+    setTimeout(() => { btnEl.textContent = '⎘ Copy'; btnEl.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ── Content block helper ───────────────────────────────────────────────────
+let blockId = 0;
+function contentBlock(labelText, value, limit, isHeadline = false) {
+  if (!value) return '';
+  const id = 'cb_' + (blockId++);
+  const btnId = 'btn_' + id;
+  return `
+    <div class="content-section">
+      <div class="content-label">${labelText}</div>
+      <div class="content-text ${isHeadline ? 'headline' : ''}" id="${id}">${escHtml(value)}</div>
+      ${charMeter(value, limit)}
+      <button class="copy-section-btn" id="${btnId}" onclick="copyText(document.getElementById('${id}'),this)">⎘ Copy</button>
+    </div>`;
+}
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Render dims ────────────────────────────────────────────────────────────
+function renderDims(dims) {
+  if (!dims || !dims.length) return '';
+  return `<div class="dims-row">${dims.map(d => `
+    <div class="dim-badge"><span class="dim-icon">📐</span>${escHtml(d)}</div>`).join('')}
+  </div>`;
+}
+
+// ── Render platform content ────────────────────────────────────────────────
+function renderInstagramContent(data, isPaid) {
+  if (!data) return '';
+  return `
+    ${isPaid ? contentBlock('Headline', data.headline, 40, true) : ''}
+    ${contentBlock(isPaid ? 'Caption / Primary Text' : 'Caption', data.caption || data.post, isPaid ? 125 : 2200)}
+    ${contentBlock('Hashtags', data.hashtags, null)}
+    ${contentBlock('CTA', data.cta, null)}
+    ${renderDims(PLATFORM_SPECS.instagram.dims)}`;
+}
+
+function renderFacebookContent(data, isPaid) {
+  if (!data) return '';
+  return `
+    ${isPaid ? contentBlock('Headline', data.headline, 40, true) : ''}
+    ${contentBlock(isPaid ? 'Primary Text' : 'Post Copy', data.primary_text || data.post, isPaid ? 125 : 500)}
+    ${isPaid ? contentBlock('Link Description', data.description, 30) : ''}
+    ${contentBlock('CTA', data.cta, null)}
+    ${renderDims(PLATFORM_SPECS.facebook.dims)}`;
+}
+
+function renderTwitterContent(data) {
+  if (!data) return '';
+  return `
+    ${contentBlock('Tweet', data.tweet, 280)}
+    ${data.thread_hook ? contentBlock('Thread Hook (Alternative)', data.thread_hook, 280) : ''}
+    ${contentBlock('CTA', data.cta, null)}
+    ${renderDims(PLATFORM_SPECS.twitter.dims)}`;
+}
+
+function renderYouTubeContent(data) {
+  if (!data) return '';
+  return `
+    ${contentBlock('Video Title', data.title, 100, true)}
+    ${contentBlock('Description', data.description, 5000)}
+    ${data.tags ? contentBlock('Tags', data.tags, 500) : ''}
+    ${contentBlock('CTA Overlay', data.cta, null)}
+    ${renderDims(PLATFORM_SPECS.youtube.dims)}`;
+}
+
+// ── Platform tabs builder ──────────────────────────────────────────────────
+function buildPlatformTabs(platforms, isPaid) {
+  const tabs = platforms.map((p, i) => {
+    const spec = PLATFORM_SPECS[p];
+    return `<div class="ptab${i===0?' active':''}" onclick="switchTab(this,'pane_${p}_${isPaid?'paid':'social'}')">${spec.icon} ${spec.label}</div>`;
+  }).join('');
+
+  const panes = platforms.map((p, i) => {
+    const spec = PLATFORM_SPECS[p];
+    return `<div class="platform-content${i===0?' active':''}" id="pane_${p}_${isPaid?'paid':'social'}">
+      ${p === 'instagram' ? renderInstagramContent(isPaid ? platforms._data?.instagram : platforms._orgData?.instagram, isPaid) : ''}
+      ${p === 'facebook' ? renderFacebookContent(isPaid ? platforms._data?.facebook : platforms._orgData?.facebook, isPaid) : ''}
+      ${p === 'twitter' ? renderTwitterContent(isPaid ? platforms._data?.twitter : platforms._orgData?.twitter) : ''}
+      ${p === 'youtube' ? renderYouTubeContent(isPaid ? platforms._data?.youtube : platforms._orgData?.youtube) : ''}
+    </div>`;
+  }).join('');
+
+  return { tabs, panes };
+}
+
+// ── Tab switch ─────────────────────────────────────────────────────────────
+function switchTab(el, paneId) {
+  const tabGroup = el.closest('.platform-tabs');
+  const bodyGroup = tabGroup.nextElementSibling;
+  tabGroup.querySelectorAll('.ptab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  bodyGroup.querySelectorAll('.platform-content').forEach(p => p.classList.remove('active'));
+  const target = bodyGroup.querySelector('#' + paneId);
+  if (target) target.classList.add('active');
+}
+
+// ── Main render ────────────────────────────────────────────────────────────
+function renderOutput(result, brand) {
+  blockId = 0;
+  let html = `
+    <div class="output-header">
+      <div class="output-title">Generated Content</div>
+      <button class="copy-all-btn" onclick="copyAll(this)">⎘ Copy All</button>
+    </div>
+    <div class="channels-output">`;
+
+  // WEBPAGE
+  if (result.webpage && selectedChannels.has('webpage')) {
+    const w = result.webpage;
+    html += `
+      <div class="channel-card" style="animation-delay:0s">
+        <div class="card-header">
+          <div class="card-title-group">
+            <div class="card-icon ic-webpage">🌐</div>
+            <div>
+              <div class="card-title">Webpage</div>
+              <div class="card-subtitle">Landing page & SEO copy</div>
+            </div>
+          </div>
+          <div class="card-specs">
+            <span class="spec-tag">Hero Section</span>
+            <span class="spec-tag">SEO Meta</span>
+            <span class="spec-tag highlight">Benefits</span>
+          </div>
+        </div>
+        <div class="card-body">
+          ${contentBlock('Hero Headline (H1)', w.hero_headline, null, true)}
+          ${contentBlock('Subheadline (H2)', w.hero_subheadline, null)}
+          ${contentBlock('Body Copy', w.body_copy, null)}
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            ${contentBlock('Primary CTA', w.cta_primary, null)}
+            ${contentBlock('Secondary CTA', w.cta_secondary, null)}
+          </div>
+          <hr class="section-divider">
+          ${contentBlock('Meta Title', w.meta_title, 60)}
+          ${contentBlock('Meta Description', w.meta_description, 160)}
+          ${w.key_benefits ? `
+            <div class="content-section">
+              <div class="content-label">Key Benefits</div>
+              ${(Array.isArray(w.key_benefits) ? w.key_benefits : [w.key_benefits]).map((b,i) => `
+                <div class="content-text" style="margin-bottom:6px">
+                  <strong style="font-family:'DM Mono',monospace;font-size:11px;color:var(--accent2)">0${i+1}</strong>  ${escHtml(b)}
+                </div>`).join('')}
+            </div>` : ''}
+        </div>
+      </div>`;
+  }
+
+  // PAID ADS
+  if (result.paid && selectedChannels.has('paid')) {
+    const pd = result.paid;
+    const availPaid = ['instagram','facebook','twitter','youtube'].filter(p => pd[p]);
+    if (availPaid.length) {
+      const paidTabsHtml = availPaid.map((p,i) => {
+        const spec = PLATFORM_SPECS[p];
+        return `<div class="ptab${i===0?' active':''}" onclick="switchTab(this,'pane_${p}_paid')">${spec.icon} ${spec.label}</div>`;
+      }).join('');
+
+      const paidPanesHtml = availPaid.map((p,i) => `
+        <div class="platform-content${i===0?' active':''}" id="pane_${p}_paid">
+          ${p==='instagram' ? renderInstagramContent(pd.instagram, true) : ''}
+          ${p==='facebook' ? renderFacebookContent(pd.facebook, true) : ''}
+          ${p==='twitter' ? renderTwitterContent(pd.twitter) : ''}
+          ${p==='youtube' ? renderYouTubeContent(pd.youtube) : ''}
+        </div>`).join('');
+
+      html += `
+        <div class="channel-card" style="animation-delay:0.1s">
+          <div class="card-header">
+            <div class="card-title-group">
+              <div class="card-icon ic-paid">💰</div>
+              <div>
+                <div class="card-title">Paid Media Ads</div>
+                <div class="card-subtitle">Platform-specific ad copy with specs</div>
+              </div>
+            </div>
+            <div class="card-specs">
+              ${availPaid.map(p => `<span class="spec-tag">${PLATFORM_SPECS[p].label}</span>`).join('')}
+            </div>
+          </div>
+          <div class="platform-tabs">${paidTabsHtml}</div>
+          <div class="card-body">${paidPanesHtml}</div>
+        </div>`;
+    }
+  }
+
+  // SOCIAL (Organic)
+  if (result.social && selectedChannels.has('social')) {
+    const so = result.social;
+    const availSoc = ['instagram','facebook','twitter','youtube'].filter(p => so[p]);
+    if (availSoc.length) {
+      const socTabsHtml = availSoc.map((p,i) => {
+        const spec = PLATFORM_SPECS[p];
+        return `<div class="ptab${i===0?' active':''}" onclick="switchTab(this,'pane_${p}_social')">${spec.icon} ${spec.label}</div>`;
+      }).join('');
+
+      const socPanesHtml = availSoc.map((p,i) => `
+        <div class="platform-content${i===0?' active':''}" id="pane_${p}_social">
+          ${p==='instagram' ? renderInstagramContent(so.instagram, false) : ''}
+          ${p==='facebook' ? renderFacebookContent(so.facebook, false) : ''}
+          ${p==='twitter' ? renderTwitterContent(so.twitter) : ''}
+          ${p==='youtube' ? renderYouTubeContent(so.youtube) : ''}
+        </div>`).join('');
+
+      html += `
+        <div class="channel-card" style="animation-delay:0.2s">
+          <div class="card-header">
+            <div class="card-title-group">
+              <div class="card-icon ic-social">📱</div>
+              <div>
+                <div class="card-title">Social Posts</div>
+                <div class="card-subtitle">Organic content with dimensions & char counts</div>
+              </div>
+            </div>
+            <div class="card-specs">
+              ${availSoc.map(p => `<span class="spec-tag">${PLATFORM_SPECS[p].label}</span>`).join('')}
+            </div>
+          </div>
+          <div class="platform-tabs">${socTabsHtml}</div>
+          <div class="card-body">${socPanesHtml}</div>
+        </div>`;
+    }
+  }
+
+  // EMAIL
+  if (result.email && selectedChannels.has('email')) {
+    const em = result.email;
+    html += `
+      <div class="channel-card" style="animation-delay:0.3s">
+        <div class="card-header">
+          <div class="card-title-group">
+            <div class="card-icon ic-email">✉️</div>
+            <div>
+              <div class="card-title">Email Campaign</div>
+              <div class="card-subtitle">Subject, preview & body copy</div>
+            </div>
+          </div>
+          <div class="card-specs">
+            <span class="spec-tag highlight">Subj: 40–50 chars</span>
+            <span class="spec-tag">Preheader: 85–100 chars</span>
+          </div>
+        </div>
+        <div class="card-body">
+          ${contentBlock('Subject Line', em.subject_line, 60)}
+          ${contentBlock('Preheader Text', em.preheader, 100)}
+          <hr class="section-divider">
+          ${contentBlock('Email Headline', em.headline, null, true)}
+          ${contentBlock('Body Copy', em.body, null)}
+          ${contentBlock('CTA Button', em.cta, null)}
+          ${em.ps_line ? contentBlock('P.S.', em.ps_line, null) : ''}
+        </div>
+      </div>`;
+  }
+
+  html += `</div>`;
+  document.getElementById('outputArea').innerHTML = html;
+}
+
+// ── Copy all ───────────────────────────────────────────────────────────────
+function copyAll(btn) {
+  const texts = [];
+  document.querySelectorAll('.content-text').forEach(el => {
+    const label = el.previousElementSibling?.textContent || '';
+    texts.push(`[${label}]\n${el.textContent}\n`);
+  });
+  navigator.clipboard.writeText(texts.join('\n---\n')).then(() => {
+    btn.textContent = '✓ All Copied!';
+    setTimeout(() => { btn.textContent = '⎘ Copy All'; }, 2500);
+  });
+}
+</script>
+</body>
+</html>
